@@ -1,18 +1,27 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 public class AdsManager : MonoBehaviour
 {
-    // Usamos Actions para injetar o que deve acontecer após o AD
     public void ShowRewardedAd(Action onSuccess, Action onFailed)
     {
         Debug.Log("AdsManager: Solicitando Rewarded Ad da CrazyGames...");
 
-        // AQUI ENTRARÁ O CÓDIGO REAL DO SDK. 
-        // Exemplo da documentação deles: 
-        // CrazyAds.Instance.beginAdBreakRewarded(onSuccess, onFailed);
+        // Inicia a simulação do tempo do anúncio
+        StartCoroutine(SimulateAdViewing(onSuccess));
+    }
 
-        // Simulando que o jogador assistiu até o fim com sucesso:
+    private IEnumerator SimulateAdViewing(Action onSuccess)
+    {
+        Debug.Log("AdsManager: Exibindo vídeo... (aguarde 3 segundos)");
+
+        // Espera 3 segundos simulando o jogador assistindo ao vídeo
+        yield return new WaitForSeconds(3f);
+
+        Debug.Log("AdsManager: Vídeo concluído com sucesso!");
+
+        // Dispara o callback de sucesso que o Presenter está esperando
         onSuccess?.Invoke();
     }
 }

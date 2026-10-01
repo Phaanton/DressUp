@@ -43,6 +43,7 @@ public class DressUpPresenter
                     {
                         model.UnlockItem(itemToEquip.itemID);
                         EquipItemAndFetchTranslation(itemToEquip);
+                        view.PopulateCategoryMenu(mainCatalog.GetAllItems(), model.IsItemUnlocked);
                     },
                     onFailed: () => Debug.Log("AD cancelado.")
                 );

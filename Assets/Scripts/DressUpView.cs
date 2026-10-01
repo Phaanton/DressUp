@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 
 [Serializable]
@@ -66,7 +67,7 @@ public class DressUpView : MonoBehaviour
     }
 
     // Chamado pelo Presenter ao abrir uma categoria (ex: "Camisas")
-    public void PopulateCategoryMenu(List<ClothingItemSO> categoryItems)
+    public void PopulateCategoryMenu(List<ClothingItemSO> categoryItems, Func<ClothingItemSO, bool> isUnlockedMethod)
     {
         foreach (Transform child in buttonsContainer)
         {
@@ -76,7 +77,12 @@ public class DressUpView : MonoBehaviour
         foreach (ClothingItemSO item in categoryItems)
         {
             ItemButtonView newButton = Instantiate(buttonPrefab, buttonsContainer);
-            newButton.Setup(item, HandleItemButtonClicked);
+
+            // Pergunta se este item específico está desbloqueado
+            bool isUnlocked = isUnlockedMethod(item);
+
+            // Passa o status para o botão na hora de criar
+            newButton.Setup(item, isUnlocked, HandleItemButtonClicked);
         }
     }
 
