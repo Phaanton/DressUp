@@ -1,17 +1,20 @@
+using NUnit.Framework;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Localization.Settings; // Necessário para a API de localização
-using UnityEngine.ResourceManagement.AsyncOperations; // Necessário para lidar com o carregamento assíncrono
+using UnityEngine.Localization.Settings;
+using UnityEngine.ResourceManagement.AsyncOperations;
+//using static UnityEngine.Rendering.VirtualTexturing.Debugging;
 
 public class DressUpPresenter
 {
     private readonly DressUpModel model;
     private readonly DressUpView view;
-
-    // Adicionamos o catálogo para poder buscar as roupas pelo ID
     private readonly CatalogGroupSO mainCatalog;
-
     private readonly AdsManager adsManager;
+
+    private ClothingCategory currentCategory;
 
     public DressUpPresenter(DressUpModel model, DressUpView view, CatalogGroupSO catalog, AdsManager adsManager)
     {
@@ -21,7 +24,34 @@ public class DressUpPresenter
         this.adsManager = adsManager;
 
         this.view.OnEquipButtonClicked += HandleEquipClicked;
+
+        // O evento agora está sincronizado e recebe o IClothingVisual
         this.model.OnEquipmentChanged += HandleEquipmentChanged;
+
+        this.view.OnCategoryTabClicked += HandleCategoryTabClicked;
+        this.view.OnColorSelected += HandleColorSelected;
+    }
+
+    public void StartGame()
+    {
+        // Pede ao Model os visuais já decorados com as cores
+        view.UpdateCharacterVisuals(model.GetCurrentVisuals());
+
+        HandleCategoryTabClicked(ClothingCategory.Shirt);
+    }
+
+    private void HandleCategoryTabClicked(ClothingCategory category)
+    {
+        currentCategory = category;
+        RefreshCurrentCategoryView();
+    }
+
+    private void RefreshCurrentCategoryView()
+    {
+        List<ClothingItemSO> allItems = mainCatalog.GetAllItems();
+        List<ClothingItemSO> filteredItems = allItems.FindAll(item => item.category == currentCategory);
+
+        view.PopulateCategoryMenu(filteredItems, model.IsItemUnlocked);
     }
 
     private void HandleEquipClicked(string itemId)
@@ -37,13 +67,12 @@ public class DressUpPresenter
             }
             else
             {
-                // Lógica de AD que fizemos na Etapa 4...
                 adsManager.ShowRewardedAd(
                     onSuccess: () =>
                     {
                         model.UnlockItem(itemToEquip.itemID);
                         EquipItemAndFetchTranslation(itemToEquip);
-                        view.PopulateCategoryMenu(mainCatalog.GetAllItems(), model.IsItemUnlocked);
+                        RefreshCurrentCategoryView();
                     },
                     onFailed: () => Debug.Log("AD cancelado.")
                 );
@@ -51,34 +80,30 @@ public class DressUpPresenter
         }
     }
 
-    // Método isolado para manter o código limpo
     private void EquipItemAndFetchTranslation(ClothingItemSO item)
     {
-        // 1. Equipa no Model (isso já dispara a atualização visual dos sprites)
         model.TryEquipItem(item, true);
 
-        // 2. Pede a tradução assíncrona do nome da roupa
-        var asyncOperation = LocalizationSettings.StringDatabase.GetLocalizedStringAsync("UITexts", item.localizationKey);
+        view.PlayEquipFeedback();
 
-        // 3. Define o que acontece quando a tradução terminar de carregar
+        var asyncOperation = LocalizationSettings.StringDatabase.GetLocalizedStringAsync("UITexts", item.localizationKey);
         asyncOperation.Completed += (AsyncOperationHandle<string> handle) =>
         {
             if (handle.Status == AsyncOperationStatus.Succeeded)
-            {
-                // Manda a View atualizar o texto na tela
                 view.UpdateEquippedItemName(handle.Result);
-            }
-            else
-            {
-                Debug.LogError($"Falha ao carregar a tradução para a chave: {item.localizationKey}");
-            }
-        };
+        }
+        ;
     }
 
-    // Agora recebemos o Dicionário completo do Model
-    private void HandleEquipmentChanged(Dictionary<ClothingCategory, ClothingItemSO> currentEquipment)
+    // Assinatura do método atualizada para IClothingVisual
+    private void HandleEquipmentChanged(Dictionary<ClothingCategory, IClothingVisual> currentEquipment)
     {
-        // Mandamos a View atualizar a tela com as roupas atuais
         view.UpdateCharacterVisuals(currentEquipment);
+    }
+
+    private void HandleColorSelected(Color color)
+    {
+        // currentCategory é a variável que já memoriza qual aba está aberta (Shirt, Shoes, etc.)
+        model.ChangeEquippedColor(currentCategory, color);
     }
 }

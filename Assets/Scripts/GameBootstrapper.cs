@@ -28,10 +28,12 @@ public class GameBootstrapper : MonoBehaviour
         // 1. Cria o Model 
         model = new DressUpModel();
 
+        model.LoadData(mainCatalog.GetAllItems());
+
         // 2. Cria o Presenter injetando todas as peças
         presenter = new DressUpPresenter(model, mainView, mainCatalog, adsManager);
 
         // 3. Inicializa a UI preenchendo o menu com os itens do catálogo
-        mainView.PopulateCategoryMenu(mainCatalog.GetAllItems(), model.IsItemUnlocked);
+        presenter.StartGame();
     }
 }
