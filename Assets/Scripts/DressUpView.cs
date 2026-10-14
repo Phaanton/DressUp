@@ -15,10 +15,6 @@ public struct CategoryRendererMapping
 
 public class DressUpView : MonoBehaviour
 {
-    // Evento disparado quando o jogador clica em um botão
-    public event Action<string> OnEquipButtonClicked;
-    public event Action<ClothingCategory> OnCategoryTabClicked;
-
     [Header("UI Elements")]
     [SerializeField] private TextMeshProUGUI equippedItemNameText;
 
@@ -40,8 +36,18 @@ public class DressUpView : MonoBehaviour
     [SerializeField] private CanvasGroup menuCanvasGroup; // Controla a transparência da lista
     [SerializeField] private float fadeDuration = 0.15f;
 
+
+
+    [Header("Fonts Setup")]
+    [SerializeField] private TMP_InputField characterNameInput; // Arraste o seu InputField aqui
+    [SerializeField] private FontButtonView fontButtonPrefab;   // Arraste o novo prefab aqui
+
     private Coroutine tabTransitionCoroutine;
 
+    public event Action<string> OnEquipButtonClicked;
+    public event Action<ClothingCategory> OnCategoryTabClicked;
+    public event Action OnFontsTabClicked;
+    public event Action<string> OnFontEquipClicked;
     public event Action<Color> OnColorSelected;
 
     // Conectado aos botões de UI no Inspector
@@ -93,7 +99,13 @@ public class DressUpView : MonoBehaviour
 
     public void OnTabButtonClicked(string categoryName)
     {
-        PlayClickSound(); // <- Toca o som ao trocar de aba
+        PlayClickSound();
+
+        if (categoryName == "Fonts")
+        {
+            OnFontsTabClicked?.Invoke();
+            return; // Sai da função sem tentar converter para o Enum
+        }
 
         if (Enum.TryParse(categoryName, out ClothingCategory parsedCategory))
         {
@@ -131,6 +143,20 @@ public class DressUpView : MonoBehaviour
             equipParticles.Stop();
             equipParticles.Play();
         }
+    }
+
+    public void ChangeNameFont(TMP_FontAsset newFont)
+    {
+        if (characterNameInput != null)
+        {
+            characterNameInput.textComponent.font = newFont;
+        }
+    }
+
+    public void PopulateFontsMenu(List<FontItemSO> fontItems, Func<FontItemSO, bool> isUnlockedMethod)
+    {
+        if (tabTransitionCoroutine != null) StopCoroutine(tabTransitionCoroutine);
+        tabTransitionCoroutine = StartCoroutine(FadeAndPopulateFontsRoutine(fontItems, isUnlockedMethod));
     }
 
     private IEnumerator FadeAndPopulateRoutine(List<ClothingItemSO> categoryItems, Func<ClothingItemSO, bool> isUnlockedMethod)
@@ -183,5 +209,47 @@ public class DressUpView : MonoBehaviour
     {
         // Repassa o clique para o Presenter (que já validará o AD e equipará no Model)
         OnEquipButtonClicked?.Invoke(itemID);
+    }
+
+    private IEnumerator FadeAndPopulateFontsRoutine(List<FontItemSO> fontItems, Func<FontItemSO, bool> isUnlockedMethod)
+    {
+        // 1. FADE OUT
+        if (menuCanvasGroup != null)
+        {
+            float elapsed = 0f;
+            float startAlpha = menuCanvasGroup.alpha;
+            while (elapsed < fadeDuration)
+            {
+                menuCanvasGroup.alpha = Mathf.Lerp(startAlpha, 0f, elapsed / fadeDuration);
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+            menuCanvasGroup.alpha = 0f;
+        }
+
+        // 2. TROCA DE ITENS
+        foreach (Transform child in buttonsContainer) Destroy(child.gameObject);
+
+        foreach (FontItemSO item in fontItems)
+        {
+            FontButtonView newButton = Instantiate(fontButtonPrefab, buttonsContainer);
+            bool isUnlocked = isUnlockedMethod(item);
+            newButton.Setup(item, isUnlocked, (id) => OnFontEquipClicked?.Invoke(id));
+        }
+
+        yield return new WaitForEndOfFrame();
+
+        // 3. FADE IN
+        if (menuCanvasGroup != null)
+        {
+            float elapsed = 0f;
+            while (elapsed < fadeDuration)
+            {
+                menuCanvasGroup.alpha = Mathf.Lerp(0f, 1f, elapsed / fadeDuration);
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+            menuCanvasGroup.alpha = 1f;
+        }
     }
 }

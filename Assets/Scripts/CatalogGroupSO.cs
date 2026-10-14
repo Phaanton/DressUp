@@ -7,6 +7,10 @@ public class CatalogGroupSO : CatalogNodeSO
     [Tooltip("Pode conter itens individuais ou outros grupos!")]
     public List<CatalogNodeSO> children = new List<CatalogNodeSO>();
 
+    [Header("Fontes do Jogo")]
+    [Tooltip("Coloque aqui todos os itens de fonte (FontItemSO)")]
+    public List<FontItemSO> allFontItems = new List<FontItemSO>();
+
     // Implementação do Composite: O grupo coleta tudo de seus filhos
     public override List<ClothingItemSO> GetAllItems()
     {

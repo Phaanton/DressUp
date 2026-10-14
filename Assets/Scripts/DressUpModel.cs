@@ -23,13 +23,11 @@ public class DressUpSaveData
 public class DressUpModel
 {
     private Dictionary<ClothingCategory, ClothingItemSO> equippedItems = new Dictionary<ClothingCategory, ClothingItemSO>();
-    // NOVO: Dicionário para memorizar as cores aplicadas
     private Dictionary<ClothingCategory, Color> equippedColors = new Dictionary<ClothingCategory, Color>();
     
     private Dictionary<ClothingCategory, IEquipStrategy> equipStrategies;
     private HashSet<string> unlockedItemsIDs = new HashSet<string>();
 
-    // ALTERADO: O evento agora envia a interface IClothingVisual em vez do ScriptableObject puro!
     public event Action<Dictionary<ClothingCategory, IClothingVisual>> OnEquipmentChanged;
 
     public DressUpModel()
@@ -86,6 +84,11 @@ public class DressUpModel
     {
         if (!item.requiresAdToUnlock) return true;
         return unlockedItemsIDs.Contains(item.itemID);
+    }
+
+    public bool IsItemUnlocked(string itemID)
+    {
+        return unlockedItemsIDs.Contains(itemID);
     }
 
     private void SaveData()
