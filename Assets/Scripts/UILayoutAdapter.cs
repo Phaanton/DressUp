@@ -37,6 +37,12 @@ public class UILayoutAdapter : MonoBehaviour
     [SerializeField] private Transform namePositionLandscape;
     [SerializeField] private Transform namePositionPortrait;
 
+    [Header("Pet Spawn Point")]
+    [Tooltip("O ponto de origem oficial que está ligado ao script DraggablePet")]
+    [SerializeField] private Transform petSpawnPointBase;
+    [SerializeField] private Transform petSpawnTargetLandscape;
+    [SerializeField] private Transform petSpawnTargetPortrait;
+
     private bool isCurrentlyPortrait;
 
     private void Start()
@@ -65,6 +71,7 @@ public class UILayoutAdapter : MonoBehaviour
             MovePanel(itemsPanel, portraitItemsParent);
             MovePanel(screenshotPanel, portraitScreenshotParent);
             MoveName(namePositionPortrait);
+            MovePet(petSpawnTargetPortrait);
 
             // Personagem para Mobile
             MoveCharacter(portraitCharacterTarget);
@@ -78,6 +85,7 @@ public class UILayoutAdapter : MonoBehaviour
             MovePanel(itemsPanel, landscapeItemsParent);
             MovePanel(screenshotPanel, landscapeScreenshotParent);
             MoveName(namePositionLandscape);
+            MovePet(petSpawnTargetLandscape);
 
             // Personagem para PC
             MoveCharacter(landscapeCharacterTarget);
@@ -110,6 +118,14 @@ public class UILayoutAdapter : MonoBehaviour
         // Copia a posição e a escala exata da âncora alvo
         characterNameInput.position = target.position;
         characterNameInput.localScale = target.localScale;
+    }
+
+    private void MovePet(Transform target)
+    {
+        if (petSpawnPointBase == null || target == null) return;
+        // Copia a posição e a escala exata da âncora alvo
+        petSpawnPointBase.position = target.position;
+        petSpawnPointBase.localScale = target.localScale;
     }
 
     private void AdjustCamera(float targetY)

@@ -67,7 +67,17 @@ public class DressUpPresenter
 
         if (itemToEquip != null)
         {
-            // CORREÇÃO: Passamos o itemToEquip inteiro, e não itemToEquip.itemID
+            // Verifica se o item clicado já é o que o personagem está a usar
+            ClothingItemSO currentlyEquipped = model.GetEquippedItem(itemToEquip.category);
+            if (currentlyEquipped != null && currentlyEquipped.itemID == itemToEquip.itemID)
+            {
+                // Se for o mesmo, ele desequipa!
+                model.UnequipItem(itemToEquip.category);
+                view.PlayEquipFeedback();
+                view.UpdateEquippedItemName(""); // Limpa o nome na tela
+                return; // Interrompe a função aqui para não equipar novamente
+            }
+
             if (model.IsItemUnlocked(itemToEquip))
             {
                 EquipItemAndFetchTranslation(itemToEquip);

@@ -66,11 +66,18 @@ public class DressUpView : MonoBehaviour
                 // A View não sabe se a roupa tem uma cor base ou foi alterada, ela apenas obedece à interface!
                 mapping.renderer.sprite = visual.GetSprite();
                 mapping.renderer.color = visual.GetColor();
+
+                // Se este slot for o Pet, reseta a posição
+                DraggablePet petScript = mapping.renderer.GetComponent<DraggablePet>();
+                if (petScript != null)
+                {
+                    petScript.ResetPosition(visual.GetSprite());
+                }
             }
             else
             {
                 mapping.renderer.sprite = null;
-                // Opcional: resetar a cor ao tirar a roupa
+                // Resetar a cor ao tirar a roupa
                 mapping.renderer.color = Color.white;
             }
         }

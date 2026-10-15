@@ -40,12 +40,13 @@ public class DressUpModel
             { ClothingCategory.Accessory, new StandardEquipStrategy() },
             { ClothingCategory.Shirt, new TorsoOrLegsEquipStrategy() },
             { ClothingCategory.Pants, new TorsoOrLegsEquipStrategy() },
-            { ClothingCategory.Dress, new DressEquipStrategy() }
+            { ClothingCategory.Dress, new DressEquipStrategy() },
+            { ClothingCategory.Pet, new StandardEquipStrategy() }
         }
         ;
     }
 
-    // NOVO: Assinatura atualizada que recebe a cor a aplicar
+    // NAssinatura atualizada que recebe a cor a aplicar
     public void TryEquipItem(ClothingItemSO itemToEquip, Color color, bool triggerEvent = true)
     {
         if (equipStrategies.TryGetValue(itemToEquip.category, out IEquipStrategy strategy))
@@ -69,7 +70,7 @@ public class DressUpModel
         TryEquipItem(itemToEquip, Color.white, triggerEvent);
     }
 
-    // NOVO: Método para alterar apenas a cor da peça que já está vestida
+    // Método para alterar apenas a cor da peça que já está vestida
     public void ChangeEquippedColor(ClothingCategory category, Color newColor)
     {
         if (equippedItems.ContainsKey(category))
@@ -91,25 +92,24 @@ public class DressUpModel
         return unlockedItemsIDs.Contains(itemID);
     }
 
-    private void SaveData()
+    public ClothingItemSO GetEquippedItem(ClothingCategory category)
     {
-        DressUpSaveData data = new DressUpSaveData();
-        data.unlockedItemIDs = new List<string>(unlockedItemsIDs);
+        return equippedItems.ContainsKey(category) ? equippedItems[category] : null;
+    }
 
-        foreach (var kvp in equippedItems)
+    public void UnequipItem(ClothingCategory category, bool triggerEvent = true)
+    {
+        if (equippedItems.ContainsKey(category))
         {
-            data.equippedItems.Add(new SavedEquipmentData
-            {
-                itemID = kvp.Value.itemID,
-                // Se não houver cor registada, guarda branco
-                itemColor = equippedColors.ContainsKey(kvp.Key) ? equippedColors[kvp.Key] : Color.white
-            });
-        }
+            equippedItems.Remove(category);
+            equippedColors.Remove(category); // Limpa a cor também
 
-        string json = JsonUtility.ToJson(data);
-        PlayerPrefs.SetString("DressUpSave", json);
-        PlayerPrefs.Save();
-        Debug.Log("Jogo salvo com sucesso: " + json);
+            if (triggerEvent)
+            {
+                OnEquipmentChanged?.Invoke(GetCurrentVisuals());
+                SaveData();
+            }
+        }
     }
 
     public void LoadData(List<ClothingItemSO> allCatalogItems)
@@ -169,5 +169,26 @@ public class DressUpModel
     public Dictionary<ClothingCategory, ClothingItemSO> GetCurrentEquipment()
     {
         return equippedItems;
+    }
+
+    private void SaveData()
+    {
+        DressUpSaveData data = new DressUpSaveData();
+        data.unlockedItemIDs = new List<string>(unlockedItemsIDs);
+
+        foreach (var kvp in equippedItems)
+        {
+            data.equippedItems.Add(new SavedEquipmentData
+            {
+                itemID = kvp.Value.itemID,
+                // Se não houver cor registada, guarda branco
+                itemColor = equippedColors.ContainsKey(kvp.Key) ? equippedColors[kvp.Key] : Color.white
+            });
+        }
+
+        string json = JsonUtility.ToJson(data);
+        PlayerPrefs.SetString("DressUpSave", json);
+        PlayerPrefs.Save();
+        Debug.Log("Jogo salvo com sucesso: " + json);
     }
 }
