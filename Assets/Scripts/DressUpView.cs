@@ -28,27 +28,65 @@ public class DressUpView : MonoBehaviour
 
     [Header("Polish & Feedback")]
     [SerializeField] private AudioSource audioSource;
-    [SerializeField] private AudioClip clickClip;
-    [SerializeField] private AudioClip equipClip;
+    [SerializeField] private AudioClip[] clickClips;
+    [SerializeField] private AudioClip[] equipClips;
     [SerializeField] private ParticleSystem equipParticles;
 
     [Header("Animations")]
     [SerializeField] private CanvasGroup menuCanvasGroup; // Controla a transparência da lista
     [SerializeField] private float fadeDuration = 0.15f;
 
-
-
     [Header("Fonts Setup")]
     [SerializeField] private TMP_InputField characterNameInput; // Arraste o seu InputField aqui
     [SerializeField] private FontButtonView fontButtonPrefab;   // Arraste o novo prefab aqui
 
-    private Coroutine tabTransitionCoroutine;
+    [Header("Audio UI")]
+    [Tooltip("Arraste o GameObject do ícone de bloqueio (o traço/X) aqui")]
+    [SerializeField] private GameObject audioBlockIcon;
+
+    [Header("Camera Zoom Settings")]
+    [SerializeField] private Camera mainCamera;
+    [Tooltip("Um objeto vazio posicionado exatamente no rosto do personagem")]
+    [SerializeField] private Transform faceZoomTarget;
+    [SerializeField] private float zoomedOrthographicSize = 3f;
+    [SerializeField] private float zoomSpeed = 6f;
+
+    [Header("Pet & Decor System")]
+    [SerializeField] private GameObject petPrefab; // Arraste o Prefab do Pet aqui
+    [SerializeField] private Transform petSpawnPointBase; // O alvo que já movemos no LayoutAdapter
+
+    [Header("Pet Context Menu")]
+    [SerializeField] private GameObject petContextMenu;
+    [SerializeField] private UnityEngine.UI.Button btnConfirmPet;
+    [SerializeField] private UnityEngine.UI.Button btnFlipPet;
+    [SerializeField] private UnityEngine.UI.Button btnDeletePet;
 
     public event Action<string> OnEquipButtonClicked;
     public event Action<ClothingCategory> OnCategoryTabClicked;
     public event Action OnFontsTabClicked;
     public event Action<string> OnFontEquipClicked;
     public event Action<Color> OnColorSelected;
+    public event Action OnAudioToggleClicked;
+
+    private Coroutine tabTransitionCoroutine;
+
+    private int lastClickIndex = -1;
+    private int lastEquipIndex = -1;
+
+    private bool isCurrentlyZoomed = false;
+    private Vector3 savedNormalPosition;
+    private float savedNormalSize;
+    private Coroutine zoomCoroutine;
+
+    private DraggablePet activePet; // Memoriza qual pet está com o menu aberto
+
+    private void Start() // Ou Awake, dependendo de como está o seu script
+    {
+        // Liga os botões do menu contextual
+        if (btnConfirmPet) btnConfirmPet.onClick.AddListener(ClosePetMenu);
+        if (btnFlipPet) btnFlipPet.onClick.AddListener(FlipActivePet);
+        if (btnDeletePet) btnDeletePet.onClick.AddListener(DeleteActivePet);
+    }
 
     // Conectado aos botões de UI no Inspector
     public void ClickEquipButton(string itemId)
@@ -71,7 +109,7 @@ public class DressUpView : MonoBehaviour
                 DraggablePet petScript = mapping.renderer.GetComponent<DraggablePet>();
                 if (petScript != null)
                 {
-                    petScript.ResetPosition(visual.GetSprite());
+                    //petScript.ResetPosition(visual.GetSprite());
                 }
             }
             else
@@ -131,24 +169,33 @@ public class DressUpView : MonoBehaviour
 
     public void PlayClickSound()
     {
-        if (audioSource != null && clickClip != null)
+        if (audioSource != null && clickClips.Length > 0)
         {
-            audioSource.PlayOneShot(clickClip);
+            AudioClip clipToPlay = GetRandomUniqueClip(clickClips, ref lastClickIndex);
+            audioSource.PlayOneShot(clipToPlay);
         }
     }
 
     public void PlayEquipFeedback()
     {
-        if (audioSource != null && equipClip != null)
+        if (audioSource != null && equipClips.Length > 0)
         {
-            audioSource.PlayOneShot(equipClip);
+            AudioClip clipToPlay = GetRandomUniqueClip(equipClips, ref lastEquipIndex);
+            audioSource.PlayOneShot(clipToPlay);
         }
 
         if (equipParticles != null)
         {
-            // Reinicia e toca as partículas
             equipParticles.Stop();
             equipParticles.Play();
+        }
+    }
+
+    public void HideNameInput()
+    {
+        if (characterNameInput != null)
+        {
+            characterNameInput.gameObject.SetActive(false);
         }
     }
 
@@ -156,6 +203,16 @@ public class DressUpView : MonoBehaviour
     {
         if (characterNameInput != null)
         {
+            // Se o campo está invisível (é a primeira vez que clica numa fonte)
+            if (!characterNameInput.gameObject.activeSelf)
+            {
+                // Ativa o campo na tela
+                characterNameInput.gameObject.SetActive(true);
+                // Define o nome padrão
+                characterNameInput.text = "Wonder Doll";
+            }
+
+            // Aplica a nova fonte escolhida (mantendo o nome que lá estiver)
             characterNameInput.textComponent.font = newFont;
         }
     }
@@ -164,6 +221,43 @@ public class DressUpView : MonoBehaviour
     {
         if (tabTransitionCoroutine != null) StopCoroutine(tabTransitionCoroutine);
         tabTransitionCoroutine = StartCoroutine(FadeAndPopulateFontsRoutine(fontItems, isUnlockedMethod));
+    }
+
+    public void SetCameraZoom(bool wantsZoom)
+    {
+        // Evita reiniciar a animação se já estiver no estado correto
+        if (wantsZoom == isCurrentlyZoomed) return;
+
+        if (zoomCoroutine != null) StopCoroutine(zoomCoroutine);
+
+        if (wantsZoom)
+        {
+            // Memoriza a posição e o tamanho normal (útil caso o PC/Mobile tenham tamanhos diferentes)
+            if (mainCamera != null)
+            {
+                savedNormalPosition = mainCamera.transform.position;
+                savedNormalSize = mainCamera.orthographicSize;
+            }
+        }
+
+        isCurrentlyZoomed = wantsZoom;
+        zoomCoroutine = StartCoroutine(ZoomRoutine(wantsZoom));
+    }
+
+    public void SpawnPet(ClothingItemSO petItem)
+    {
+        if (petPrefab == null || petSpawnPointBase == null) return;
+
+        // Cria o clone no ponto do mundo
+        GameObject newPetGo = Instantiate(petPrefab, petSpawnPointBase.position, Quaternion.identity);
+        DraggablePet petScript = newPetGo.GetComponent<DraggablePet>();
+
+        // Pega a imagem usando a interface padrão e envia para o Pet
+        IClothingVisual visual = new DefaultClothingVisual(petItem);
+        petScript.Setup(visual.GetSprite());
+
+        // Fica a ouvir quando este clone for clicado
+        petScript.OnPetClicked += OpenPetMenu;
     }
 
     private IEnumerator FadeAndPopulateRoutine(List<ClothingItemSO> categoryItems, Func<ClothingItemSO, bool> isUnlockedMethod)
@@ -218,6 +312,20 @@ public class DressUpView : MonoBehaviour
         OnEquipButtonClicked?.Invoke(itemID);
     }
 
+    public void ClickAudioToggleButton()
+    {
+        OnAudioToggleClicked?.Invoke();
+    }
+
+    public void UpdateAudioButtonIcon(bool isMuted)
+    {
+        if (audioBlockIcon != null)
+        {
+            // Se estiver mutado, ativa o ícone de bloqueio. Se tiver som, desativa.
+            audioBlockIcon.SetActive(isMuted);
+        }
+    }
+
     private IEnumerator FadeAndPopulateFontsRoutine(List<FontItemSO> fontItems, Func<FontItemSO, bool> isUnlockedMethod)
     {
         // 1. FADE OUT
@@ -257,6 +365,74 @@ public class DressUpView : MonoBehaviour
                 yield return null;
             }
             menuCanvasGroup.alpha = 1f;
+        }
+    }
+
+    private AudioClip GetRandomUniqueClip(AudioClip[] clipsArray, ref int lastIndex)
+    {
+        // Proteção: se o array só tiver 1 som, toca-o direto para não criar um loop infinito
+        if (clipsArray.Length == 1) return clipsArray[0];
+
+        int randomIndex = lastIndex;
+
+        // Continua a sortear enquanto o número for igual ao último que tocou
+        while (randomIndex == lastIndex)
+        {
+            randomIndex = UnityEngine.Random.Range(0, clipsArray.Length);
+        }
+
+        // Atualiza a memória com o novo som que vai tocar agora
+        lastIndex = randomIndex;
+        return clipsArray[randomIndex];
+    }
+
+    private IEnumerator ZoomRoutine(bool isZoomed)
+    {
+        if (mainCamera == null) yield break;
+
+        // Se quiser zoom, vai para o alvo do rosto. Se não, volta para o salvo.
+        Vector3 targetPos = isZoomed && faceZoomTarget != null ?
+            new Vector3(faceZoomTarget.position.x, faceZoomTarget.position.y, savedNormalPosition.z) :
+            savedNormalPosition;
+
+        float targetSize = isZoomed ? zoomedOrthographicSize : savedNormalSize;
+
+        // Move e redimensiona suavemente
+        while (Mathf.Abs(mainCamera.orthographicSize - targetSize) > 0.01f || Vector3.Distance(mainCamera.transform.position, targetPos) > 0.01f)
+        {
+            mainCamera.orthographicSize = Mathf.Lerp(mainCamera.orthographicSize, targetSize, Time.deltaTime * zoomSpeed);
+            mainCamera.transform.position = Vector3.Lerp(mainCamera.transform.position, targetPos, Time.deltaTime * zoomSpeed);
+            yield return null;
+        }
+
+        // Garante o valor final exato
+        mainCamera.orthographicSize = targetSize;
+        mainCamera.transform.position = targetPos;
+    }
+
+    private void OpenPetMenu(DraggablePet clickedPet)
+    {
+        activePet = clickedPet;
+        if (petContextMenu) petContextMenu.SetActive(true);
+    }
+
+    private void ClosePetMenu()
+    {
+        if (petContextMenu) petContextMenu.SetActive(false);
+        activePet = null;
+    }
+
+    private void FlipActivePet()
+    {
+        if (activePet != null) activePet.Flip();
+    }
+
+    private void DeleteActivePet()
+    {
+        if (activePet != null)
+        {
+            Destroy(activePet.gameObject);
+            ClosePetMenu();
         }
     }
 }

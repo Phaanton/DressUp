@@ -41,9 +41,9 @@ public class DressUpModel
             { ClothingCategory.Shirt, new TorsoOrLegsEquipStrategy() },
             { ClothingCategory.Pants, new TorsoOrLegsEquipStrategy() },
             { ClothingCategory.Dress, new DressEquipStrategy() },
-            { ClothingCategory.Pet, new StandardEquipStrategy() }
-        }
-        ;
+            { ClothingCategory.Pet, new StandardEquipStrategy() },
+            { ClothingCategory.Face, new StandardEquipStrategy() }
+        };
     }
 
     // NAssinatura atualizada que recebe a cor a aplicar

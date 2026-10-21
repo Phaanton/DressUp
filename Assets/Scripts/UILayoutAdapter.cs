@@ -43,6 +43,12 @@ public class UILayoutAdapter : MonoBehaviour
     [SerializeField] private Transform petSpawnTargetLandscape;
     [SerializeField] private Transform petSpawnTargetPortrait;
 
+    [Header("Face Zoom Target")]
+    [Tooltip("O objeto original 'FaceZoomTarget' que está linkado no DressUpView")]
+    [SerializeField] private Transform faceZoomTargetBase;
+    [SerializeField] private Transform faceZoomTargetLandscape;
+    [SerializeField] private Transform faceZoomTargetPortrait;
+
     private bool isCurrentlyPortrait;
 
     private void Start()
@@ -72,6 +78,7 @@ public class UILayoutAdapter : MonoBehaviour
             MovePanel(screenshotPanel, portraitScreenshotParent);
             MoveName(namePositionPortrait);
             MovePet(petSpawnTargetPortrait);
+            MoveZoom(faceZoomTargetPortrait);
 
             // Personagem para Mobile
             MoveCharacter(portraitCharacterTarget);
@@ -86,6 +93,7 @@ public class UILayoutAdapter : MonoBehaviour
             MovePanel(screenshotPanel, landscapeScreenshotParent);
             MoveName(namePositionLandscape);
             MovePet(petSpawnTargetLandscape);
+            MoveZoom(faceZoomTargetLandscape);
 
             // Personagem para PC
             MoveCharacter(landscapeCharacterTarget);
@@ -118,6 +126,14 @@ public class UILayoutAdapter : MonoBehaviour
         // Copia a posição e a escala exata da âncora alvo
         characterNameInput.position = target.position;
         characterNameInput.localScale = target.localScale;
+    }
+
+    private void MoveZoom(Transform target)
+    {
+        if (faceZoomTargetBase == null || target == null) return;
+        // Copia a posição e a escala exata da âncora alvo
+        faceZoomTargetBase.position = target.position;
+        faceZoomTargetBase.localScale = target.localScale;
     }
 
     private void MovePet(Transform target)

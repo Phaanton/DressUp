@@ -7,5 +7,6 @@ public enum ClothingCategory
     Dress, // O vestido é o caso especial: ele cobre o tronco e as pernas
     Shoes,
     Accessory,
-    Pet
+    Pet,
+    Face
 }

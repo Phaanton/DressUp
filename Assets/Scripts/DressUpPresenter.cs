@@ -36,10 +36,15 @@ public class DressUpPresenter
 
         this.view.OnFontsTabClicked += HandleFontsTabClicked;
         this.view.OnFontEquipClicked += HandleFontEquipClicked;
+
+        this.view.OnAudioToggleClicked += HandleAudioToggle;
+        LoadAudioState();
     }
 
     public void StartGame()
     {
+        view.HideNameInput();
+
         // Pede ao Model os visuais já decorados com as cores
         view.UpdateCharacterVisuals(model.GetCurrentVisuals());
 
@@ -49,6 +54,7 @@ public class DressUpPresenter
     private void HandleCategoryTabClicked(ClothingCategory category)
     {
         currentCategory = category;
+        view.SetCameraZoom(category == ClothingCategory.Face);
         RefreshCurrentCategoryView();
     }
 
@@ -69,7 +75,7 @@ public class DressUpPresenter
         {
             // Verifica se o item clicado já é o que o personagem está a usar
             ClothingItemSO currentlyEquipped = model.GetEquippedItem(itemToEquip.category);
-            if (currentlyEquipped != null && currentlyEquipped.itemID == itemToEquip.itemID)
+            if (itemToEquip.category != ClothingCategory.Pet && currentlyEquipped != null && currentlyEquipped.itemID == itemToEquip.itemID)
             {
                 // Se for o mesmo, ele desequipa!
                 model.UnequipItem(itemToEquip.category);
@@ -99,8 +105,15 @@ public class DressUpPresenter
 
     private void EquipItemAndFetchTranslation(ClothingItemSO item)
     {
-        model.TryEquipItem(item, true);
+        // Se for um Pet, apenas manda a View instanciar um novo!
+        if (item.category == ClothingCategory.Pet)
+        {
+            view.SpawnPet(item);
+            view.PlayEquipFeedback();
+            return; // Sai da função sem tentar equipar no Model
+        }
 
+        model.TryEquipItem(item, true);
         view.PlayEquipFeedback();
 
         var asyncOperation = LocalizationSettings.StringDatabase.GetLocalizedStringAsync("UITexts", item.localizationKey);
@@ -126,8 +139,10 @@ public class DressUpPresenter
 
     private void HandleFontsTabClicked()
     {
+        view.SetCameraZoom(false);
+
         // Usa a sua lógica do Model para saber se está destrancado
-        view.PopulateFontsMenu(allFontsCatalog, (font) => !font.requiresAdToUnlock || model.IsItemUnlocked(font.itemID)); // Usamos uma lambda para adaptar ao método antigo
+        view.PopulateFontsMenu(allFontsCatalog, (font) => !font.requiresAdToUnlock || model.IsItemUnlocked(font.itemID));
     }
 
     private void HandleFontEquipClicked(string fontId)
@@ -153,5 +168,36 @@ public class DressUpPresenter
                 onFailed: () => Debug.Log("AD de Fonte cancelado.")
             );
         }
+    }
+
+    private void HandleAudioToggle()
+    {
+        // Verifica o estado atual (volume 0 é mutado, volume 1 é som ligado)
+        bool isCurrentlyMuted = AudioListener.volume == 0f;
+
+        // Inverte o estado
+        bool newStateMuted = !isCurrentlyMuted;
+
+        ApplyAudioState(newStateMuted);
+    }
+
+    private void ApplyAudioState(bool isMuted)
+    {
+        // O AudioListener afeta TODOS os sons do jogo de uma só vez
+        AudioListener.volume = isMuted ? 0f : 1f;
+
+        // Atualiza a View
+        view.UpdateAudioButtonIcon(isMuted);
+
+        // Salva a preferência (1 para mutado, 0 para com som)
+        PlayerPrefs.SetInt("GameMuted", isMuted ? 1 : 0);
+        PlayerPrefs.Save();
+    }
+
+    private void LoadAudioState()
+    {
+        // Lê a preferência salva (padrão é 0 = com som)
+        bool isMuted = PlayerPrefs.GetInt("GameMuted", 0) == 1;
+        ApplyAudioState(isMuted);
     }
 }

@@ -29,6 +29,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 3531e955674485744b158b45ca986c6b, type: 2}
   - {fileID: 11400000, guid: dc9f522724512274f9e99c1e227b2644, type: 2}
   - {fileID: 11400000, guid: 3f0b77477778e914790eaf356f881b92, type: 2}
+  - {fileID: 11400000, guid: 82f6ee6fe79e36e43975e3385602d74b, type: 2}
+  - {fileID: 11400000, guid: 3b3afad71f9ece040b3a9cc0e6cf8ea8, type: 2}
   allFontItems:
   - {fileID: 11400000, guid: 0d40a328f34f4814d9a925ef5e3bee43, type: 2}
   - {fileID: 11400000, guid: 13f69ace056725842b22dba0dfa233f0, type: 2}
