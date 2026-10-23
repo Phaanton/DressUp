@@ -14,8 +14,8 @@ public class DressUpPresenter
     private readonly CatalogGroupSO mainCatalog;
     private readonly AdsManager adsManager;
     private List<FontItemSO> allFontsCatalog;
-
     private ClothingCategory currentCategory;
+    private bool isEditingFonts = false;
 
     public DressUpPresenter(DressUpModel model, DressUpView view, CatalogGroupSO catalog, AdsManager adsManager)
     {
@@ -39,6 +39,8 @@ public class DressUpPresenter
 
         this.view.OnAudioToggleClicked += HandleAudioToggle;
         LoadAudioState();
+
+        this.view.OnMainTabClicked += HandleMainTabClicked;
     }
 
     public void StartGame()
@@ -48,13 +50,15 @@ public class DressUpPresenter
         // Pede ao Model os visuais já decorados com as cores
         view.UpdateCharacterVisuals(model.GetCurrentVisuals());
 
-        HandleCategoryTabClicked(ClothingCategory.Shirt);
+        HandleMainTabClicked(MainCategoryGroup.Head);
+        HandleCategoryTabClicked(ClothingCategory.HairFront);
     }
 
     private void HandleCategoryTabClicked(ClothingCategory category)
     {
+        isEditingFonts = false;
+
         currentCategory = category;
-        view.SetCameraZoom(category == ClothingCategory.Face);
         RefreshCurrentCategoryView();
     }
 
@@ -133,12 +137,21 @@ public class DressUpPresenter
 
     private void HandleColorSelected(Color color)
     {
-        // currentCategory é a variável que já memoriza qual aba está aberta (Shirt, Shoes, etc.)
-        model.ChangeEquippedColor(currentCategory, color);
+        if (isEditingFonts)
+        {
+            // Se estiver na aba de fontes, pinta apenas o texto
+            view.SetNameTextColor(color);
+        }
+        else
+        {
+            // currentCategory é a variável que já memoriza qual aba está aberta (Shirt, Shoes, etc.)
+            model.ChangeEquippedColor(currentCategory, color);
+        }
     }
 
     private void HandleFontsTabClicked()
     {
+        isEditingFonts = true;
         view.SetCameraZoom(false);
 
         // Usa a sua lógica do Model para saber se está destrancado
@@ -199,5 +212,17 @@ public class DressUpPresenter
         // Lê a preferência salva (padrão é 0 = com som)
         bool isMuted = PlayerPrefs.GetInt("GameMuted", 0) == 1;
         ApplyAudioState(isMuted);
+    }
+
+    private void HandleMainTabClicked(MainCategoryGroup group)
+    {
+        // 1. Atualiza a visibilidade das sub-guias na UI
+        view.UpdateSubTabsVisibility(group);
+
+        // 2. Controla o Zoom: Ativa apenas se a guia principal for "Head"
+        view.SetCameraZoom(group == MainCategoryGroup.Head);
+
+        // 3. (Opcional) Define se está nas fontes para o sistema de cores
+        isEditingFonts = (group == MainCategoryGroup.Fonts);
     }
 }

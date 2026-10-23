@@ -16,6 +16,7 @@ MonoBehaviour:
   icon: {fileID: 0}
   children:
   - {fileID: 11400000, guid: e4678b0e32be26a44889f9660a223e9c, type: 2}
+  - {fileID: 11400000, guid: ece5275197953eb4eaf74da9211355af, type: 2}
   - {fileID: 11400000, guid: 94637fed266a4724ab86db874a61c6bc, type: 2}
   - {fileID: 11400000, guid: 1e52fe98aafbd7640b9eed33da675596, type: 2}
   - {fileID: 11400000, guid: b5b26e884e270064a8e731882eae1c7d, type: 2}
@@ -31,6 +32,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 3f0b77477778e914790eaf356f881b92, type: 2}
   - {fileID: 11400000, guid: 82f6ee6fe79e36e43975e3385602d74b, type: 2}
   - {fileID: 11400000, guid: 3b3afad71f9ece040b3a9cc0e6cf8ea8, type: 2}
+  - {fileID: 11400000, guid: 4fb84348ce7e156489f98498a6c6604c, type: 2}
+  - {fileID: 11400000, guid: f2157c992b4c47043b9ec9b4d2306dfa, type: 2}
   allFontItems:
   - {fileID: 11400000, guid: 0d40a328f34f4814d9a925ef5e3bee43, type: 2}
   - {fileID: 11400000, guid: 13f69ace056725842b22dba0dfa233f0, type: 2}

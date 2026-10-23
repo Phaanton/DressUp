@@ -1,6 +1,7 @@
 public enum ClothingCategory
 {
-    Hair,
+    HairFront,
+    HairBack,
     Hat,
     Shirt,
     Pants,
@@ -8,5 +9,12 @@ public enum ClothingCategory
     Shoes,
     Accessory,
     Pet,
-    Face
+    Eyes,
+    Mouth,
+    Background
+}
+
+public enum MainCategoryGroup
+{
+    Head, Clothes, Accessories, Fonts // Adicionei Fonts caso ela continue a ser uma aba separada
 }

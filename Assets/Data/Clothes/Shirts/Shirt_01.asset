@@ -16,6 +16,6 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: 0d896ffc853585148990d40be965d50b, type: 3}
   itemID: Shirt_01
   localizationKey: 
-  category: 2
+  category: 3
   itemSprite: {fileID: 21300000, guid: 0d896ffc853585148990d40be965d50b, type: 3}
   requiresAdToUnlock: 0

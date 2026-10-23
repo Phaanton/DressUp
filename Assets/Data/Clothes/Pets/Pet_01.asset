@@ -16,6 +16,6 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: 1820f8adc42d552448a34de495fd1b99, type: 3}
   itemID: Pet_01
   localizationKey: 
-  category: 7
+  category: 8
   itemSprite: {fileID: 21300000, guid: 1820f8adc42d552448a34de495fd1b99, type: 3}
   requiresAdToUnlock: 0

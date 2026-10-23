@@ -34,7 +34,8 @@ public class DressUpModel
     {
         equipStrategies = new Dictionary<ClothingCategory, IEquipStrategy>
         {
-            { ClothingCategory.Hair, new StandardEquipStrategy() },
+            { ClothingCategory.HairFront, new StandardEquipStrategy() },
+            { ClothingCategory.HairBack, new StandardEquipStrategy() },
             { ClothingCategory.Hat, new StandardEquipStrategy() },
             { ClothingCategory.Shoes, new StandardEquipStrategy() },
             { ClothingCategory.Accessory, new StandardEquipStrategy() },
@@ -42,11 +43,13 @@ public class DressUpModel
             { ClothingCategory.Pants, new TorsoOrLegsEquipStrategy() },
             { ClothingCategory.Dress, new DressEquipStrategy() },
             { ClothingCategory.Pet, new StandardEquipStrategy() },
-            { ClothingCategory.Face, new StandardEquipStrategy() }
+            { ClothingCategory.Eyes, new StandardEquipStrategy() },
+            { ClothingCategory.Mouth, new StandardEquipStrategy() },
+            { ClothingCategory.Background, new StandardEquipStrategy() }
         };
     }
 
-    // NAssinatura atualizada que recebe a cor a aplicar
+    // Assinatura atualizada que recebe a cor a aplicar
     public void TryEquipItem(ClothingItemSO itemToEquip, Color color, bool triggerEvent = true)
     {
         if (equipStrategies.TryGetValue(itemToEquip.category, out IEquipStrategy strategy))

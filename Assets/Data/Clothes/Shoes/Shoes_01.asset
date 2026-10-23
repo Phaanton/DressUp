@@ -16,6 +16,6 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: 01297e5f620e8ca489093ce2de7af736, type: 3}
   itemID: shoes_01
   localizationKey: 
-  category: 5
+  category: 6
   itemSprite: {fileID: 21300000, guid: 01297e5f620e8ca489093ce2de7af736, type: 3}
   requiresAdToUnlock: 0

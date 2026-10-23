@@ -16,6 +16,6 @@ MonoBehaviour:
   icon: {fileID: -8544532928212166487, guid: 2a0af669597b58d4aa008d7ab01b85be, type: 3}
   itemID: Pants_02
   localizationKey: 
-  category: 3
+  category: 4
   itemSprite: {fileID: -8544532928212166487, guid: 2a0af669597b58d4aa008d7ab01b85be, type: 3}
   requiresAdToUnlock: 0

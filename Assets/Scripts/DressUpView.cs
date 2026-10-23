@@ -15,6 +15,11 @@ public struct CategoryRendererMapping
 
 public class DressUpView : MonoBehaviour
 {
+    [Header("Main Tabs & Sub-Tabs")]
+    [SerializeField] private GameObject headSubTabsPanel;
+    [SerializeField] private GameObject clothesSubTabsPanel;
+    [SerializeField] private GameObject accessoriesSubTabsPanel;
+
     [Header("UI Elements")]
     [SerializeField] private TextMeshProUGUI equippedItemNameText;
 
@@ -67,6 +72,7 @@ public class DressUpView : MonoBehaviour
     public event Action<string> OnFontEquipClicked;
     public event Action<Color> OnColorSelected;
     public event Action OnAudioToggleClicked;
+    public event Action<MainCategoryGroup> OnMainTabClicked;
 
     private Coroutine tabTransitionCoroutine;
 
@@ -86,6 +92,21 @@ public class DressUpView : MonoBehaviour
         if (btnConfirmPet) btnConfirmPet.onClick.AddListener(ClosePetMenu);
         if (btnFlipPet) btnFlipPet.onClick.AddListener(FlipActivePet);
         if (btnDeletePet) btnDeletePet.onClick.AddListener(DeleteActivePet);
+    }
+
+    public void ClickMainTabButton(string tabName)
+    {
+        if (Enum.TryParse(tabName, out MainCategoryGroup group))
+        {
+            OnMainTabClicked?.Invoke(group);
+        }
+    }
+
+    public void UpdateSubTabsVisibility(MainCategoryGroup activeGroup)
+    {
+        if (headSubTabsPanel) headSubTabsPanel.SetActive(activeGroup == MainCategoryGroup.Head);
+        if (clothesSubTabsPanel) clothesSubTabsPanel.SetActive(activeGroup == MainCategoryGroup.Clothes);
+        if (accessoriesSubTabsPanel) accessoriesSubTabsPanel.SetActive(activeGroup == MainCategoryGroup.Accessories);
     }
 
     // Conectado aos botões de UI no Inspector
@@ -214,6 +235,15 @@ public class DressUpView : MonoBehaviour
 
             // Aplica a nova fonte escolhida (mantendo o nome que lá estiver)
             characterNameInput.textComponent.font = newFont;
+        }
+    }
+
+    public void SetNameTextColor(Color newColor)
+    {
+        if (characterNameInput != null && characterNameInput.textComponent != null)
+        {
+            // O TextMeshPro Input Field aplica a cor no TextComponent interno dele
+            characterNameInput.textComponent.color = newColor;
         }
     }
 
